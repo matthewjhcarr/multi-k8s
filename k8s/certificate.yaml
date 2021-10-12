@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: totalgremlin-com-tls
+spec:
+  secretName: totalgremlin-com
+  issureRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: totalgremlin.com
+  dnsNames:
+    - totalgremlin.com
+    - www.totalgremlin.com

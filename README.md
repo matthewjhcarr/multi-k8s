@@ -610,3 +610,91 @@ Allows an account to do a certain set of actions across the _entire_ cluster
 Allows an account to do a certain set of actions across a _single namespace_.
 
 A _namespace_ is a collection of resources.
+
+## HTTPS Setup
+In order to get proper HTTPS certification, we will need to do a few things:
+
+1. Purchase a domain
+2. Set up Cert Manager
+
+### Purchasing a domain
+Purchasing a domain is fairly straightforward and doesn't _really_ need any explanation. The relevant part to note is that we will be purchasing a domain from [domains.google.com](http://domains.google.com). This is important to note because it __does__ affect the way we set things up.
+
+#### Setting up custom records for our domain
+We need to set up two custom records for our domain: one for `<ourdomainname>` and one for `www.<ourdomainname>`.
+
+The setup for this looks something like this:
+
+![custom records](./img/custom-records.png)
+
+### Setting up cert manager
+The documentation for cert manager can be found [here](http://cert-manager.readthedocs.io).
+
+To install with helm, we follow the steps described [here](https://cert-manager.io/docs/installation/helm/).
+
+#### Issuer
+An object telling Cert Manager how to reach out to a Certificate Authority to obtain a Certificate. The Cetificate Authority we want to reach out to is LetsEncrypt.
+
+The config file for an issuer will look something like the following:
+```
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: 'matthewjhcarr@gmail.com'
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+      http01:
+        ingress:
+          class: nginx
+```
+
+##### name
+We want to name this with something that makes a reference to the CA we are reaching out to
+
+##### email
+LetsEncrypt wants our email for whatever reason, so we add it in here
+
+##### privateKeySecretRef
+LetsEncrypt sends us a small private key that is tied to our session. This allows the authentication exchange that verifies us.
+
+##### solvers
+This is described [here](https://docs.cert-manager.io/en/latest/tasks/issuers/setup-acme/index.html#creating-a-basic-acme-user)
+
+#### Certificate
+An object describing details about the certificate that should be obtained
+
+The config file for our certificate object will look something like the following:
+```
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: totalgremlin-com-tls
+spec:
+  secretName: totalgremlin-com
+  issureRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: totalgremlin.com
+  dnsNames:
+    - totalgremlin.com
+    - www.totalgremlin.com
+```
+
+##### secretName
+This tells us where to store the secret associated with the certificate
+
+##### issuerRef
+This refers to the properties in our `issuer.yaml` file
+
+##### commonName
+This is our domain and the extension. This says that the certificate is good for any page served up with this domain.
+
+##### dnsNames
+A list of all the domains that should be associated with the certificate
+
+### Configure ingress-nginx
