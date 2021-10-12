@@ -698,3 +698,65 @@ This is our domain and the extension. This says that the certificate is good for
 A list of all the domains that should be associated with the certificate
 
 ### Configure ingress-nginx
+To configure the ingress-nginx deployment, we need to add the following things to the config file:
+
+#### annotations
+```
+cert-manager.io/cluster-issuer: 'letsencrypt-prod'
+nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+```
+
+
+#### spec
+```
+spec:
+  tls:
+    - hosts:
+        - totalgremlin.com
+        - www.totalgremlin.com
+      secretName: totalgremlin-com
+```
+We should add the above `tls` block right at the start of the `spec` block.
+
+#### Duplicate http block
+On the line above `http`, we need to add `- host: <yourdomainname>` and indent the http line by one.  
+We then need to copy and paste the entire block, and on the second block rename the host to `www.<yourdomainname>`.
+
+For example:
+```
+rules:
+  - host: totalgremlin.com
+    http:
+      paths:
+        - path: /?(.*)
+          pathType: Prefix
+          backend:
+            service:
+              name: client-cluster-ip-service
+              port:
+                number: 3000
+        - path: /api/?(.*)
+          pathType: Prefix
+          backend:
+            service:
+              name: server-cluster-ip-service
+              port:
+                number: 5000
+  - host: www.totalgremlin.com
+    http:
+      paths:
+        - path: /?(.*)
+          pathType: Prefix
+          backend:
+            service:
+              name: client-cluster-ip-service
+              port:
+                number: 3000
+        - path: /api/?(.*)
+          pathType: Prefix
+          backend:
+            service:
+              name: server-cluster-ip-service
+              port:
+                number: 5000
+```
