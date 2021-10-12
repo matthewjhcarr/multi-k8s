@@ -372,3 +372,89 @@ The `paths` property is an array consisting of individual routing rules where we
 `service:` The service (probably a ClusterIP service) we want to route traffic to if the path matches  
 `name:` The name of the service  
 `port:/number:` The port number exposed by that service.
+
+### Travis configuration
+The following diagram displays the steps we will need to take when defining our travis configuration file for our project:
+
+![travis config](./img/travis-config.png)
+
+```
+dskjfgh
+```
+
+#### Service account
+`activate-service-account` is equivalent to setting up an IAM user on AWS. In fact, google has its own interface to create an IAM user.
+
+We will create the `service-account.json` file using Google Cloud and then upload it to Travis. However, since this file contains sensitive information, we will encrypt it using the Travis CI CLI before uploading it to our Travis account, which will prevent it from being viewed by the outside world.
+
+__UNDER NO CIRCUMSTANCES SHOULD THIS FILE BE UPLOADED TO GITHUB OR OTHERWISE EXPOSED.__
+
+##### Creating the JSON file
+On the google console, naviagte to the Service account settings by going to Hamburger icon > IAM & Admin > Service Accounts and click "Create service account".
+
+Name the account something sensible, i.e. 'travis-deployer', and click "Create and continue"
+
+Search for and select the role 'Kubernetes Engine Admin' and click "Continue"
+
+There is no need to grant users access to the service account, so click "Done".
+
+Now we see a table containing the service account we just created. Click the three dots in the "Actions" column on our new account and click "Manage keys".
+
+Click "Add key" and then "Create new key".
+
+Ensure Key type is set to JSON amd click "Create".
+
+Download and save the JSON key file.
+
+##### Encrypting and upload file
+To install Travis CI CLI, we need Ruby installed. That's kind of an unnecessary pain, but lo and behold we can use Docker to help us out!
+
+Steps are as follows:
+
+1. Download and install a ruby image
+    Ensure you are within your project directory _(i.e. the github repo directory)_ Then execute the following command:
+
+        docker run -it -v $(pwd):/app ruby:2.4 sh
+    
+    This command will start up a ruby container, map the present working directory (your project dir) to the `/app` folder within the container, and start up a shell within the container.
+2. Install travis
+    To do this, execute the following command:
+        
+        gem install travis
+
+    This command is the ruby command to install packages
+3. Create a Personal Access Token on GitHub to allow travis to login
+    This is pretty straightforward. In GitHub, navigate as follows:
+    
+    > Settings \> Developer settings \> Personal access tokens \> Generate new token
+
+    Select the following scope:  
+    - `user:email`
+    - `read:org`
+    - `repo`
+
+    It's fine to set the expiration for this token as around a day, we don't need it for long.
+
+    Generate the token and copy it to your clipboard
+4. Login with travis in the Ruby shell
+    Back in your terminal execute the following command:
+
+        travis login --github-token <YOUR TOKEN> --com
+
+    This tells travis that we want to associate our files and settings with our personal travis account.
+5. Copy our service account JSON file into the volumed dir (aka our project dir)
+    Rename the copied file to `service-account.json`.
+
+    __NOTE: DO NOT COMMIT THIS JSON FILE. DELETE IT ONCE YOU'RE DONE__
+6. Encrypt our json file using travis
+    To encrypt the file, we run the following command:
+
+        travis encrypt-file service-account.json -r <our github repo> --com
+    
+    This encrypts the file and ties it to our repository.
+7. Copy the entire command that travis recommends adding to the start of the build script. It should start with `openssl` and end with `-d`
+    This tells travis to use the encrypted file that we just created.
+8. Delete our local copy of `service-account.json` and include `service-account.json.enc` in our commit
+9. Exit the ruby container with the following command:
+        exit
+10. Commit the new encrypted file to github
