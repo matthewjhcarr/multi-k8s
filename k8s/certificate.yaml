@@ -4,7 +4,7 @@ metadata:
   name: totalgremlin-com-tls
 spec:
   secretName: totalgremlin-com
-  issureRef:
+  issuerRef:
     name: letsencrypt-prod
     kind: ClusterIssuer
   commonName: totalgremlin.com
