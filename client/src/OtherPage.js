@@ -1,6 +1,6 @@
 import React from 'react'
 import {Link} from 'react-router-dom'
-import {catthew} from './img/catthew.jpeg'
+import catthew from './img/catthew.jpeg'
 
 export default () => {
   return (
