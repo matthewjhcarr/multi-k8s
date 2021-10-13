@@ -5,7 +5,7 @@ import catthew from './img/catthew.jpeg'
 export default () => {
   return (
     <>
-      <image src={catthew} alt="catthew" />
+      <img src={catthew} alt="catthew" />
       <br />
       <Link to="/">Go home!</Link>
     </>
