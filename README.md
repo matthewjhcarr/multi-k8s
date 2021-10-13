@@ -583,6 +583,8 @@ Why do we use `$GIT_SHA`? Well, not only does it give us a handy way to tag our 
 ### Helm
 Helm is a package manager for Kubernetes that allows us to install third party packages _(such as ingress-nginx)_ inside of our Kubernetes clusters. Think of it as an alternitive to the `kubectl apply ...` command we had to use to add `ingress-nginx` to our local cluster. It's very helpful when some of the setup is more challenging.
 
+__For this project, all the commands in this section are to be executed in the Google Cloud console__
+
 To install Helm, run the following commands:
 ```
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
@@ -593,6 +595,10 @@ chmod 700 get_helm.sh
 There's more information in the [docs](https://helm.sh/docs/intro/install#from-script). Full helm docs are found [here](https://helm.sh/docs/).
 
 #### Installing ingress-nginx using Helm
+To install `ingress-nginx` simply execute the following command:
+```
+helm install ingress-nginx ingress-nginx/ingress-nginx
+```
 
 ### Role Based Access Control (RBAC)
 This is a system that limits who can access and modify objects in our cluster. This is usually _not_ enabled by default locally, and _is_ enabled on Google Cloud by default. The following kinds of accounts are defined:
